@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:           gsettings-desktop-schemas
-Version:        3.22.0
+Version:        3.24.1
 Release:        1%{?dist}
 Summary:        A collection of GSettings schemas
 
@@ -9,7 +9,7 @@ License:        LGPLv2+
 # no homepage exists for this component
 URL:            http://bugzilla.gnome.org/enter_bug.cgi?product=gsettings-desktop-schemas
 #VCS: git:git://git.gnome.org/gsettings-desktop-schemas
-Source0:        http://download.gnome.org/sources/%{name}/3.22/%{name}-%{version}.tar.xz
+Source0:        http://download.gnome.org/sources/%{name}/3.24/%{name}-%{version}.tar.xz
 
 BuildRequires: glib2-devel >= 2.31.0
 BuildRequires: intltool
@@ -74,6 +74,11 @@ fi
 
 
 %changelog
+* Wed Sep 20 2017 Bastien Nocera <bnocera@redhat.com> - 3.24.1-1
++ gsettings-desktop-schemas-3.24.1-1
+- Update to 3.24.1
+- Resolves: #1481405
+
 * Wed Sep 21 2016 Kalev Lember <klember@redhat.com> - 3.22.0-1
 - Update to 3.22.0
 - Resolves: #1386977

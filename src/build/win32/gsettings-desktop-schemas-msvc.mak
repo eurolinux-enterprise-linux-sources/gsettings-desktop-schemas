@@ -78,7 +78,7 @@ setgirbuildenv:
 
 gsettings-desktop-schemas.pc: ..\..\gsettings-desktop-schemas.pc.in
 	@echo Generating gsettings-desktop-schemas.pc...
-	$(PYTHON) genpc.py --prefix=$(PREFIX) --version=3.22.0
+	$(PYTHON) genpc.py --prefix=$(PREFIX) --version=3.24.1
 
 install: $(gschemas) org.gnome.desktop.enums.xml gsettings-desktop-schemas.pc
 	@-if not exist $(PREFIX)\share\glib-2.0\schemas mkdir $(PREFIX)\share\glib-2.0\schemas
