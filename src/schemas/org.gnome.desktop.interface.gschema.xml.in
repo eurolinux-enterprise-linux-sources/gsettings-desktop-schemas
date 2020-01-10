@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="gsettings-desktop-schemas">
   <schema id="org.gnome.desktop.interface" path="/org/gnome/desktop/interface/">
     <key name="toolkit-accessibility" type="b">
@@ -218,6 +219,13 @@
       <summary>Show date in clock</summary>
       <description>
         If true, display date in the clock, in addition to time.
+      </description>
+    </key>
+    <key name="clock-show-weekday" type="b">
+      <default>true</default>
+      <summary>Show weekday in clock</summary>
+      <description>
+        If true, display weekday in the clock, in addition to time.
       </description>
     </key>
     <key name="show-battery-percentage" type="b">
