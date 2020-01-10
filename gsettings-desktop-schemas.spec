@@ -1,20 +1,24 @@
 %global debug_package %{nil}
 
 Name:           gsettings-desktop-schemas
-Version:        3.14.2
+Version:        3.22.0
 Release:        1%{?dist}
 Summary:        A collection of GSettings schemas
 
-Group:          System Environment/Libraries
 License:        LGPLv2+
 # no homepage exists for this component
 URL:            http://bugzilla.gnome.org/enter_bug.cgi?product=gsettings-desktop-schemas
 #VCS: git:git://git.gnome.org/gsettings-desktop-schemas
-Source:         http://download.gnome.org/sources/%{name}/3.14/%{name}-%{version}.tar.xz
+Source0:        http://download.gnome.org/sources/%{name}/3.22/%{name}-%{version}.tar.xz
 
 BuildRequires: glib2-devel >= 2.31.0
 BuildRequires: intltool
 BuildRequires: gobject-introspection-devel
+
+# Older versions need the "scroll-method" key that was removed in 3.19.3
+Conflicts: control-center < 1:3.19.3
+Conflicts: gnome-settings-daemon < 3.19.3
+Conflicts: mutter < 3.19.3
 
 Requires: glib2 >= 2.31.0
 
@@ -24,7 +28,6 @@ settings shared by various components of a desktop.
 
 %package        devel
 Summary:        Development files for %{name}
-Group:          Development/Libraries
 Requires:       %{name}%{?_isa} = %{version}-%{release}
 
 %description    devel
@@ -35,13 +38,14 @@ and header files for developing applications that use %{name}.
 %prep
 %setup -q
 
+
 %build
 %configure --disable-schemas-compile --enable-introspection=yes
 make %{?_smp_mflags}
 
 
 %install
-make install DESTDIR=$RPM_BUILD_ROOT INSTALL="install -p"
+%make_install
 
 %find_lang %{name} --with-gnome
 
@@ -55,7 +59,8 @@ fi
 
 
 %files -f %{name}.lang
-%doc AUTHORS COPYING MAINTAINERS NEWS README
+%doc AUTHORS MAINTAINERS NEWS README
+%license COPYING
 %{_datadir}/glib-2.0/schemas/*
 %{_datadir}/GConf/gsettings/gsettings-desktop-schemas.convert
 %{_datadir}/GConf/gsettings/wm-schemas.convert
@@ -69,6 +74,10 @@ fi
 
 
 %changelog
+* Wed Sep 21 2016 Kalev Lember <klember@redhat.com> - 3.22.0-1
+- Update to 3.22.0
+- Resolves: #1386977
+
 * Thu Apr 30 2015 Bastien Nocera <bnocera@redhat.com> 3.14.2-1
 - Update to 3.14.2
 Resolves: #1174444

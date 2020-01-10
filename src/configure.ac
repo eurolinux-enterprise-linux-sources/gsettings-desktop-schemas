@@ -1,7 +1,7 @@
 AC_PREREQ(2.53)
-AC_INIT([gsettings-desktop-schemas], [3.14.2],
+AC_INIT([gsettings-desktop-schemas], [3.22.0],
         [http://bugzilla.gnome.org/enter_bug.cgi?product=gsettings-desktop-schemas])
-AC_CONFIG_SRCDIR(schemas/org.gnome.desktop.default-applications.gschema.xml.in.in)
+AC_CONFIG_SRCDIR(schemas/org.gnome.desktop.default-applications.gschema.xml.in)
 AM_INIT_AUTOMAKE([1.9 foreign no-dist-gzip dist-xz])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AC_CONFIG_MACRO_DIR([m4])
@@ -20,11 +20,14 @@ GOBJECT_INTROSPECTION_CHECK([1.31.0])
 GETTEXT_PACKAGE=gsettings-desktop-schemas
 AC_SUBST(GETTEXT_PACKAGE)
 AM_GLIB_GNU_GETTEXT
-IT_PROG_INTLTOOL([0.40.0])
+IT_PROG_INTLTOOL([0.50.1])
 
 AC_OUTPUT([
 Makefile
 gsettings-desktop-schemas.pc
+build/Makefile
+build/win32/Makefile
+build/win32/gsettings-desktop-schemas-msvc.mak
 headers/Makefile
 schemas/Makefile
 po/Makefile.in

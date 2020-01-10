@@ -14,6 +14,39 @@
 
 @SET_MAKE@
 
+# Author: Fan, Chun-wei
+# Common autotools file for constructing the g-ir-scanner and
+# g-ir-compiler command lines for Visual Studio builds.
+
+# This is copied from $(srcroot)/build from the gobject-introspection
+# project, which may be included in projects that support both
+# Visual Studio builds and introspection.
+
+# * Input variables:
+#
+#   MSVC_INTROSPECT_GIRS - List of .gir's that should be built
+#                          in the NMake Makefiles
+#
+# * Simple tutorial
+#
+# Add this to Makefile.am where your library/program is built:
+#   (Either YourLib_1_0_gir_MSVC_LIBS or YourLib_1_0_gir_MSVC_PROGRAM
+#    is required unless --headers-only is specified in
+#    YourLib_1_0_gir__MSVC_SCANNERFLAGS)
+#
+#   include $(top_srcdir)/build/Makefile.msvc-introspection
+#   MSVC_INTROSPECT_GIRS = YourLib-1.0.gir
+#   YourLib_1_0_gir_NAMESPACE = YourLib # This is optional
+#   YourLib_1_0_gir_VERSION = 1.0 # This is optional
+#   YourLib_1_0_gir_MSVC_LIBS = yourlib-1.0
+#   YourLib_1_0_gir_MSVC_FILES = $(libyourlib_1_0_SOURCES)
+#   YourLib_1_0_gir_MSVC_PROGRAM = YourProgram
+#   YourLib_1_0_gir_MSVC_PACKAGES = (Dependent .pc files)
+#   YourLib_1_0_gir_MSVC_INCLUDE_GIRS = (Dependent external .gir's)
+#   YourLiv_1_0_gir_MSVC_EXPORT_PACKAGES = (Packages exported by this .gir)
+
+# Private functions
+
 
 VPATH = @srcdir@
 am__is_gnu_make = { \
@@ -169,7 +202,8 @@ am__define_uniq_tagged_files = \
   done | $(am__uniquify_input)`
 ETAGS = etags
 CTAGS = ctags
-am__DIST_COMMON = $(srcdir)/Makefile.in
+am__DIST_COMMON = $(srcdir)/Makefile.in \
+	$(top_srcdir)/build/Makefile.msvc-introspection
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ALL_LINGUAS = @ALL_LINGUAS@
@@ -317,10 +351,50 @@ CLEANFILES = $(am__append_2)
 @HAVE_INTROSPECTION_TRUE@gir_DATA = $(INTROSPECTION_GIRS)
 @HAVE_INTROSPECTION_TRUE@typelibdir = $(libdir)/girepository-1.0
 @HAVE_INTROSPECTION_TRUE@typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
+
+# -------------------------- Introspection MSVC Build Files ---------
+@HAVE_INTROSPECTION_TRUE@MSVC_INTROSPECT_GIRS = $(INTROSPECTION_GIRS)
+@HAVE_INTROSPECTION_TRUE@INTROSPECTION_INTERMEDIATE_ITEMS = \
+@HAVE_INTROSPECTION_TRUE@	$(top_builddir)/build/win32/GDesktopEnums-3.0.gir.msvc.introspect	\
+@HAVE_INTROSPECTION_TRUE@	$(top_builddir)/build/win32/GDesktopEnums_3_0_gir_list
+
+@HAVE_INTROSPECTION_TRUE@GDesktopEnums_3_0_gir_MSVC_FILES = \
+@HAVE_INTROSPECTION_TRUE@    $(GDesktopEnums_3_0_gir_FILES)
+
+@HAVE_INTROSPECTION_TRUE@GDesktopEnums_3_0_gir_MSVC_SCANNERFLAGS = $(GDesktopEnums_3_0_gir_SCANNERFLAGS)
+@HAVE_INTROSPECTION_TRUE@GDesktopEnums_3_0_gir_MSVC_CFLAGS = -I..\\headers
+@HAVE_INTROSPECTION_TRUE@_gir_name = $(subst /,_,$(subst -,_,$(subst .,_,$(1))))
+
+# Namespace and Version is either fetched from the gir filename
+# or the _NAMESPACE/_VERSION variable combo
+@HAVE_INTROSPECTION_TRUE@_gir_namespace_msvc = $(or $($(_gir_name)_NAMESPACE),$(firstword $(subst -, ,$(notdir $(1)))))
+@HAVE_INTROSPECTION_TRUE@_gir_version_msvc = $(or $($(_gir_name)_VERSION),$(lastword $(subst -, ,$(1:.gir=))))
+@HAVE_INTROSPECTION_TRUE@_typelib_basename_msvc = $(_gir_namespace_msvc)'-'$(_gir_version_msvc)
+
+# _PROGRAM is an optional variable which needs its own --program argument
+@HAVE_INTROSPECTION_TRUE@_gir_program_msvc = $(if $($(_gir_name)_MSVC_PROGRAM),--program=$($(_gir_name)_MSVC_PROGRAM))
+
+# Deduce the sub-folder from $(srcroot) where the sources reside in
+@HAVE_INTROSPECTION_TRUE@_gir_source_path_raw_msvc := $(subst $(abs_top_srcdir),,$(abs_srcdir))
+@HAVE_INTROSPECTION_TRUE@_gir_source_path_msvc = $(subst /,\\,$(_gir_source_path_raw_msvc))
+@HAVE_INTROSPECTION_TRUE@_gir_source_subdir_int_msvc = $(subst \\\\,\\,\\$(_gir_source_path_msvc)\\)
+@HAVE_INTROSPECTION_TRUE@_gir_source_subdir_msvc = $(subst \\.\\,\\,$(_gir_source_subdir_int_msvc))
+@HAVE_INTROSPECTION_TRUE@_gir_files_raw_msvc = $(subst /,\\,$($(_gir_name)_MSVC_FILES))
+@HAVE_INTROSPECTION_TRUE@_gir_files_msvc = $(subst $(srcdir)\\,,$(subst $(builddir)\\,,$(subst $(top_builddir)\\$(_gir_source_path_msvc)\\,\\,$(_gir_files_raw_msvc))))
+
+# Create a list of items for:
+# - Libraries
+# - Packages
+# - GIRs to include
+# - packages to export
+@HAVE_INTROSPECTION_TRUE@_gir_libraries_msvc = $(foreach lib,$($(_gir_name)_MSVC_LIBS),--library=$(lib))
+@HAVE_INTROSPECTION_TRUE@_gir_packages_msvc = $(foreach pkg,$($(_gir_name)_MSVC_PACKAGES),--pkg=$(pkg))
+@HAVE_INTROSPECTION_TRUE@_gir_includes_msvc = $(foreach include,$($(_gir_name)_MSVC_INCLUDE_GIRS),--include=$(include))
+@HAVE_INTROSPECTION_TRUE@_gir_export_packages_msvc = $(foreach pkg,$($(_gir_name)_MSVC_EXPORT_PACKAGES),--pkg-export=$(pkg))
 all: all-am
 
 .SUFFIXES:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir)/build/Makefile.msvc-introspection $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -340,6 +414,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe);; \
 	esac;
+$(top_srcdir)/build/Makefile.msvc-introspection $(am__empty):
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
@@ -464,6 +539,7 @@ cscopelist-am: $(am__tagged_files)
 
 distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
+@HAVE_INTROSPECTION_FALSE@dist-hook:
 
 distdir: $(DISTFILES)
 	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
@@ -495,6 +571,9 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
+	$(MAKE) $(AM_MAKEFLAGS) \
+	  top_distdir="$(top_distdir)" distdir="$(distdir)" \
+	  dist-hook
 check-am: all-am
 check: check-am
 all-am: Makefile $(DATA) $(HEADERS)
@@ -604,22 +683,85 @@ uninstall-am: uninstall-gdesktopincludeHEADERS uninstall-girDATA \
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean clean-generic \
-	cscopelist-am ctags ctags-am distclean distclean-generic \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am \
-	install-gdesktopincludeHEADERS install-girDATA install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip install-typelibDATA installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-generic pdf pdf-am ps ps-am tags \
-	tags-am uninstall uninstall-am \
+	cscopelist-am ctags ctags-am dist-hook distclean \
+	distclean-generic distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
+	install-exec-am install-gdesktopincludeHEADERS install-girDATA \
+	install-html install-html-am install-info install-info-am \
+	install-man install-pdf install-pdf-am install-ps \
+	install-ps-am install-strip install-typelibDATA installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-generic pdf \
+	pdf-am ps ps-am tags tags-am uninstall uninstall-am \
 	uninstall-gdesktopincludeHEADERS uninstall-girDATA \
 	uninstall-typelibDATA
 
 .PRECIOUS: Makefile
 
+
+#
+# Create NMake Makefile Sections for Building Introspection files
+# from autotools files
+# $(1) - File Name of the .gir that is to be generated
+#
+
+@HAVE_INTROSPECTION_TRUE@define gir-nmake-builder
+
+# Basic sanity check, to make sure required variables are set
+@HAVE_INTROSPECTION_TRUE@$(if $($(_gir_name)_MSVC_FILES),,$(error Need to define $(_gir_name)_MSVC_FILES))
+@HAVE_INTROSPECTION_TRUE@$(if $(or $(findstring --header-only,$($(_gir_name)_MSVC_SCANNERFLAGS)),
+@HAVE_INTROSPECTION_TRUE@          $($(_gir_name)_MSVC_LIBS),
+@HAVE_INTROSPECTION_TRUE@          $($(_gir_name)_MSVC_PROGRAM)),,
+@HAVE_INTROSPECTION_TRUE@    $(error Need to define $(_gir_name)_MSVC_LIBS or $(_gir_name)_MSVC_PROGRAM))
+
+@HAVE_INTROSPECTION_TRUE@$(top_builddir)/build/win32/$(_gir_name)_list:
+@HAVE_INTROSPECTION_TRUE@	for F in $(_gir_files_msvc); do \
+@HAVE_INTROSPECTION_TRUE@		case $$$$F in \
+@HAVE_INTROSPECTION_TRUE@		*.c|*.cpp|*.cc|*.cxx|*.h|*.hpp|*.hh|*.hxx) \
+@HAVE_INTROSPECTION_TRUE@			echo '..\..'$(_gir_source_subdir_msvc)$$$$F >>$(top_builddir)/build/win32/$(_gir_name)_list \
+@HAVE_INTROSPECTION_TRUE@			;; \
+@HAVE_INTROSPECTION_TRUE@		esac; \
+@HAVE_INTROSPECTION_TRUE@	done
+
+@HAVE_INTROSPECTION_TRUE@$(top_builddir)/build/win32/$(1).msvc.introspect:
+@HAVE_INTROSPECTION_TRUE@	-$(RM) $(top_builddir)/build/win32/$(1).msvc.introspect
+
+# Assemble the Command to Run g-ir-scanner
+@HAVE_INTROSPECTION_TRUE@	echo $(1)': '$(_gir_name)'_list '$($(_gir_name)_MSVC_GIR_DEPS)>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	@-echo Generating $$$$@...'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	$$$$(PYTHON) $$$$(G_IR_SCANNER)	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	--verbose -no-libtool	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	--namespace='$(_gir_namespace_msvc)'	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	--nsversion='$(_gir_version_msvc)'	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	'$(_gir_packages_msvc)'	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	'$(_gir_libraries_msvc)'	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	'$(_gir_program_msvc)'	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	--add-include-path=$$$$(G_IR_INCLUDEDIR)	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	'$(_gir_includes_msvc)'	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	'$(_gir_export_packages_msvc)'	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	--cflags-begin	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	'$($(_gir_name)_MSVC_CFLAGS)'	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	--cflags-end	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	'$($(_gir_name)_MSVC_SCANNERFLAGS)'	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	--filelist='$(_gir_name)'_list	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	-o $$$$@'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '' >>$(top_builddir)/build/win32/$(1).msvc.introspect
+
+# Finally Assemble the Command to Compile the generated .gir
+@HAVE_INTROSPECTION_TRUE@	echo '$(_typelib_basename_msvc).typelib: '$(_typelib_basename_msvc)'.gir'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	@-echo Compiling $$$$@...'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	$$$$(G_IR_COMPILER)	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	--includedir=. --debug --verbose	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	'$(1)'	\'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '	-o $$$$@'>>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@	echo '' >>$(top_builddir)/build/win32/$(1).msvc.introspect
+@HAVE_INTROSPECTION_TRUE@endef
+
+@HAVE_INTROSPECTION_TRUE@$(foreach gir,$(MSVC_INTROSPECT_GIRS),$(eval $(call gir-nmake-builder,$(gir))))
+
+@HAVE_INTROSPECTION_TRUE@dist-hook: $(INTROSPECTION_INTERMEDIATE_ITEMS)
+# --------------------------------------------------------------------
 
 -include $(top_srcdir)/git.mk
 -include $(INTROSPECTION_MAKEFILE)
