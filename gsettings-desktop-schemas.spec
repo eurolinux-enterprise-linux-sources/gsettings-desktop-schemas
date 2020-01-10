@@ -2,7 +2,7 @@
 
 Name:           gsettings-desktop-schemas
 Version:        3.24.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A collection of GSettings schemas
 
 License:        LGPLv2+
@@ -10,6 +10,8 @@ License:        LGPLv2+
 URL:            http://bugzilla.gnome.org/enter_bug.cgi?product=gsettings-desktop-schemas
 #VCS: git:git://git.gnome.org/gsettings-desktop-schemas
 Source0:        http://download.gnome.org/sources/%{name}/3.24/%{name}-%{version}.tar.xz
+
+Patch0: 0001-schemas-Add-tertiary-button-action-for-Wacom-styli.patch
 
 BuildRequires: glib2-devel >= 2.31.0
 BuildRequires: intltool
@@ -37,7 +39,7 @@ and header files for developing applications that use %{name}.
 
 %prep
 %setup -q
-
+%patch0 -p1
 
 %build
 %configure --disable-schemas-compile --enable-introspection=yes
@@ -74,6 +76,10 @@ fi
 
 
 %changelog
+* Tue Apr 17 2018 Carlos Garnacho <cgarnach@redhat.com> - 3.24.1-2
+- Add support for Wacom Pro Pen 3D styli
+Resolves: #1568715
+
 * Wed Sep 20 2017 Bastien Nocera <bnocera@redhat.com> - 3.24.1-1
 + gsettings-desktop-schemas-3.24.1-1
 - Update to 3.24.1
